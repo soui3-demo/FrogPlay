@@ -7,10 +7,10 @@ CONFIG(x64){
 TARGET = $$TARGET"64"
 }
 
-include($$(SOUIPATH)/demo_com.pri)
+include($$(SOUI3PATH)/demo_com.pri)
 INCLUDEPATH += . \
-               $(SOUIPATH)/third-part \
-               $(SOUIPATH)/third-part/stdint \
+               $(SOUI3PATH)/third-part \
+               $(SOUI3PATH)/third-part/stdint \
 			   
 QMAKE_LIBDIR += ./vlc/lib
 
@@ -19,10 +19,10 @@ QMAKE_LFLAGS_DEBUG += /SAFESEH:NO
 
 
 CONFIG(debug,debug|release){
-	LIBS += utilitiesd.lib souid.lib	
+	LIBS += utilitiesd.lib soui3d.lib	
 }
 else{
-	LIBS += utilities.lib soui.lib
+	LIBS += utilities.lib soui3.lib
 }
 
 LIBS += libvlc.lib libvlccore.lib
@@ -40,7 +40,7 @@ HEADERS += AVPlayer.h \
            SouiRealWndHandler.h \
            TipWnd.h \
            taskbarlist3-i.h \
-           $(SOUIPATH)/controls.extend/SRadioBox2.h \
+           $(SOUI3PATH)/controls.extend/SRadioBox2.h \
            resource.h \
            res/resource.h
            
@@ -51,6 +51,6 @@ SOURCES += AVPlayer.cpp \
            RealWndDlg.cpp \
            SouiRealWndHandler.cpp \
            TipWnd.cpp \
-           $(SOUIPATH)/controls.extend/SRadioBox2.cpp \
+           $(SOUI3PATH)/controls.extend/SRadioBox2.cpp \
 
 RC_FILE += FrogPlay.rc

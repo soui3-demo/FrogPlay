@@ -33,32 +33,18 @@ const TCHAR STR_SUPPORT_FILE_EXT[] =
 	_T("*.asf;*.avi;*.wm;*.wmp;*.wmv;*.ram;*.rm;*.rmvb;*.rp;*.rpm;*.rt;*.smi;*.smil;*.dat;*.m1v;*.m2p;*.m2t;*.m2ts;*.m2v;*.mp2v;*.mpeg;*.mpe;*.mpg;*.mpv2;*.pss;*.pva;*.tp;*.tpr;*.ts;*.m4b;*.m4p;*.m4v;*.mp4;*.mpeg4;*.mov;*.qt;*.f4v;*.flv;*.hlv;*.swf;*.ifo;*.vob;*.3g2;*.3gp;*.3gp2;*.3gpp;*.amv;*.bik;*.csf;*.divx;*.evo;*.ivm;*.mkv;*.mod;*.mts; *.ogm; *.pmp; *.scm; *.tod; *.vp6; *.webm; *.xlmv;*.aac; *.ac3; *.amr; *.ape; *.cda; *.dts; *.flac; *.mla; *.m2a; *.m4a; *.mid; *.midi; *.mka; *.mp2; *.mp3; *.mpa; *.ogg; *.ra; *.tak; *.tta; *.wav; *.wma; *.wv;");
 
 
-
-//增加文件结构体
-struct Thread_add
+void UpdateFileList(SListView *mclist, const vector<SStringT> & pfiles,HWND hWnd)
 {
-	SListView* plist;
-	vector<SStringT> files;
-	HWND hwnd;
-};
-//增加文件线程提高UI响应速度
-static DWORD WINAPI threadadd(LPVOID lpParameter)
-{
-	struct Thread_add* prama1 = (struct Thread_add *)lpParameter;
-	SListView  *mclist = prama1->plist;
-	vector<SStringT> pfiles = prama1->files;
-	HWND phwnd = prama1->hwnd;
-	delete prama1;
 	CPlayListWnd *pAdapter = (CPlayListWnd*)mclist->GetAdapter();
-	for (vector<SStringT>::iterator it = pfiles.begin(); it != pfiles.end(); ++it)
+	for (vector<SStringT>::const_iterator it = pfiles.begin(); it != pfiles.end(); ++it)
 	{
 		SStringT  path_name = *it;
 		pAdapter->ADD_files(path_name);
 	}
-	::PostMessage(prama1->hwnd,MS_ADD_FILESED,0,0);
-
-	return 0;
+	pAdapter->notifyDataSetChanged();
+	::PostMessage(hWnd,MS_ADD_FILESED,0,0);
 }
+
 //文件文件夹拖入
 class CTestDropTarget1 : public CTestDropTarget
 {
@@ -130,11 +116,7 @@ public:
 		GlobalUnlock(medium.hGlobal);
 		if (m_pmanwindow)
 		{			
-			struct Thread_add *prama1 = new Thread_add;
-			prama1->files = vctString;
-			prama1->plist = mclist;
-			prama1->hwnd = m_hwnd;
-			HANDLE hThread = CreateThread(NULL, 0, &threadadd, (LPVOID)prama1, 0, 0);
+			UpdateFileList(mclist,vctString,m_hwnd);
 		}
 		*pdwEffect = DROPEFFECT_LINK;
 		return S_OK;
@@ -315,7 +297,6 @@ bool CMainDlg::LoadhistoryXml()
 			SStringT _path = *it;
 			pAdapter->ADD_files(_path);
 		}
-		pAdapter->Release();
 		return true;
 	}
 	return false;
@@ -346,7 +327,7 @@ BOOL CMainDlg::OnInitDialog(HWND hWnd, LPARAM lParam)
 
 	}
 
-	CSimpleWnd::SetWindowTextW(L"青蛙看看播放器");
+	SNativeWnd::SetWindowTextW(L"青蛙看看播放器");
 
 	m_Play_List_Wnd = FindChildByName2<SListView>(L"lv_play_list");
 	if (m_Play_List_Wnd)
@@ -372,7 +353,7 @@ BOOL CMainDlg::OnInitDialog(HWND hWnd, LPARAM lParam)
 //TODO:消息映射
 void CMainDlg::OnClose()
 {
-	CSimpleWnd::DestroyWindow();
+	SNativeWnd::DestroyWindow();
 }
 
 void CMainDlg::OnMaximize()
@@ -607,7 +588,7 @@ void CMainDlg::Play(LPCTSTR pszPath)
 		}
 		SStringT name, exname;
 		CFileHelp::SplitPathFileName(m_strPath, name, exname);
-		CSimpleWnd::SetWindowTextW(name);
+		SNativeWnd::SetWindowTextW(name);
 		::SetTimer(NULL, 1, 1000, TimeProc);
 		Hstory_List.insert(m_strPath);
 	}
@@ -626,11 +607,7 @@ void CMainDlg::OnBtnOpen()	//打开文件
 	vector<SStringT> names;	
 	CFileHelp::OpenFile(STR_MOVE_FILE_FILTER, GetHostHwnd(), names);
 	if (names.empty()) return;
-	struct Thread_add *prama1 = new Thread_add;
-	prama1->files = names;
-	prama1->plist = m_Play_List_Wnd;
-	prama1->hwnd = m_hWnd;
-	HANDLE hThread = CreateThread(NULL, 0, &threadadd, (LPVOID)prama1, 0, 0);
+	UpdateFileList(m_Play_List_Wnd,names,m_hWnd);
 	SWindow   *playlist_wnd = FindChildByID(123);
 	if (!playlist_wnd->IsVisible())
 	{
@@ -644,7 +621,7 @@ void CMainDlg::OnBtnStop()	// 停止
 	FindChildByID2<SImageButton>(201)->SetVisible(false, true);
 	m_Sliderbarpos->SetValue(0);
 	FindChildByID(6000)->SetWindowTextW(L"");
-	CSimpleWnd::SetWindowTextW(L"青蛙看看播放器");
+	SNativeWnd::SetWindowTextW(L"青蛙看看播放器");
 	SWindow *slierWnd = FindChildByID(121);
 	if (slierWnd)
 	{
@@ -692,7 +669,7 @@ void CMainDlg::OnBtnVolum_mute()	//静音
 void CMainDlg::OnOpenPlayListLoop_Menu()
 {
 	SMenu m_playlistLoop;
-	m_playlistLoop.LoadMenu(_T("menu_playlistloop"), _T("LAYOUT"));
+	m_playlistLoop.LoadMenu(_T("LAYOUT:menu_playlistloop"));
 	CRect rc_menu;
 	SWindow * pBtn = FindChildByID(300);
 	if (pBtn)
@@ -732,7 +709,7 @@ void CMainDlg::OnOpenPlayListLoop_Menu()
 void CMainDlg::OnOpenMainBtn_Menu()
 {
 	SMenu m_main_menu;
-	m_main_menu.LoadMenu(_T("menu_main"), _T("LAYOUT"));
+	m_main_menu.LoadMenu(_T("LAYOUT:menu_main"));
 	CRect rc_menu;
 	SWindow * pBtn = FindChildByID(501);
 	if (pBtn)
@@ -882,12 +859,7 @@ void CMainDlg::On_directories() //打开目录
 		::SetCurrentDirectory(path);
 		CFileHelp::EnumerateFiles(names, STR_SUPPORT_FILE_EXT);
 		if (names.empty()) return;
-		struct Thread_add *prama1 = new Thread_add;
-		prama1->files = names;
-		prama1->plist = m_Play_List_Wnd;
-		prama1->hwnd = m_hWnd;
-		HANDLE hThread = CreateThread(NULL, 0, &threadadd, (LPVOID)prama1, 0, 0);
-
+		UpdateFileList(m_Play_List_Wnd,names,m_hWnd);
 	}
 
 
@@ -904,14 +876,13 @@ LRESULT CMainDlg::OnMyMsg_ADD_FILED(UINT uMsg, WPARAM wp, LPARAM lp, BOOL & bHan
 			playlist_wnd->SetVisible(true, true);
 		}
 	}
-	pAdapter->notifyDataSetChanged();
 	return 0;
 }
 
 void CMainDlg::OnBtn_Menu_History()//打开播放痕迹菜单
 {
 	SMenu m_main_menu;
-	m_main_menu.LoadMenu(_T("menu_history"), _T("LAYOUT"));
+	m_main_menu.LoadMenu(_T("LAYOUT:menu_history"));
 	CRect rc_menu;
 	SImageButton * pBtn = FindChildByID2<SImageButton>(250);
 	if (pBtn)

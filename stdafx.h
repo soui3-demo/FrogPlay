@@ -14,7 +14,7 @@
 #include "resource.h"
 #define R_IN_CPP	//定义这个开关来
 #include "res\resource.h"
-#include <control/realwndhandler-i.h>
+#include <control/SRealWndHandler-i.h>
 #include <shobjidl.h>
 #include <shlobj.h>
 #include "helper/SMenu.h"
